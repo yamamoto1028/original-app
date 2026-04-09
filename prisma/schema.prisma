@@ -33,7 +33,7 @@ enum Sex {
 model User {
   id                     Int                       @id @default(autoincrement())
   teamId                 Int
-  role                   Role?
+  roleId                 Int
   name                   String
   email                  String
   profilePhotoUrl        String?
@@ -50,7 +50,8 @@ model User {
   UserDiaryStamps        UserDiaryStamp[]
   UserDiaryCommentStamps UserDiaryCommentStamp[] 
   DiaryComment           DiaryComment[]
-  Team                   Team                      @relation(fields: [teamId],references: [id])
+  Team                   Team                      @relation(fields: [teamId],references: [id],onDelete: Cascade)
+  Role                   Role                      @relation(fields: [roleId],references: [id])
 }
 
 enum TriggerType {
@@ -70,7 +71,7 @@ model ReminderSetting {
   createdAt             DateTime              @default(now()) @map("created_at")
   updatedAt             DateTime              @updatedAt @map("updated_at")
   ReminderSettingRoles  ReminderSettingRole[]
-  Team                  Team                  @relation(fields: [teamId],references: [id])
+  Team                  Team                  @relation(fields: [teamId],references: [id],onDelete: Cascade)
 
 }
 
@@ -95,8 +96,8 @@ model Role {
   createdAt            DateTime              @default(now()) @map("created_at")
   updatedAt            DateTime              @updatedAt @map("updated_at")
   ReminderSettingRoles ReminderSettingRole[]
-  Team                 Team                  @relation(fields: [teamId],references: [id])
-  User                 User                  @relation(fields: [userId],references: [id])
+  Team                 Team                  @relation(fields: [teamId],references: [id],onDelete: Cascade)
+  User                 User[]
 }
 
 model UserEvent {
@@ -116,7 +117,7 @@ model Event {
   createdAt  DateTime      @default(now()) @map("created_at")
   updatedAt  DateTime      @updatedAt @map("updated_at")
   UserEvents UserEvent[]
-  Team       Team         @relation(fields: [teamId],references: [id])
+  Team       Team         @relation(fields: [teamId],references: [id],onDelete: Cascade)
 }
 
 model UserDiaryStamp{
@@ -126,8 +127,8 @@ model UserDiaryStamp{
   stampType String
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
-  User      User      @relation(fields: [userId], references: [id])
-  Diary     Diary     @relation(fields: [diaryId],references: [id])
+  User      User      @relation(fields: [userId], references: [id],onDelete: Cascade)
+  Diary     Diary     @relation(fields: [diaryId],references: [id],onDelete: Cascade)
   @@unique([userId,diaryId,stampType])
 }
 
@@ -150,8 +151,8 @@ model Diary {
   updatedAt       DateTime          @updatedAt @map("updated_at")
   UserDiaryStamps UserDiaryStamp[]
   DiaryComments   DiaryComment[] 
-  User            User              @relation(fields: [userId], references: [id])
-  DiaryCategory   DiaryCategory     @relation(fields: [diaryCategoryId],references: [id])
+  User            User              @relation(fields: [userId], references: [id],onDelete: Cascade)
+  DiaryCategory   DiaryCategory     @relation(fields: [diaryCategoryId],references: [id],onDelete: Cascade)
 
 }
 
@@ -162,7 +163,7 @@ model DiaryCategory{
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   Diaries   Diary[]
-  Team      Team     @relation(fields: [teamId],references: [id])
+  Team      Team     @relation(fields: [teamId],references: [id],onDelete: Cascade)
 }
 
 model UserDiaryCommentStamp {
@@ -172,8 +173,9 @@ model UserDiaryCommentStamp {
   stampType       String
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @updatedAt @map("updated_at")
-  User            User         @relation(fields: [userId],references: [id])
-  DiaryComment    DiaryComment @relation(fields: [diaryCommentId],references: [id])
+  User            User         @relation(fields: [userId],references: [id],onDelete: Cascade)
+  DiaryComment    DiaryComment @relation(fields: [diaryCommentId],references: [id],onDelete: Cascade)
+  @@unique([userId,diaryCommentId,stampType])
 }
 
 model DiaryComment {
@@ -184,6 +186,6 @@ model DiaryComment {
   createdAt               DateTime                @default(now()) @map("created_at")
   updatedAt               DateTime                @updatedAt @map("updated_at")
   UserDiaryCommentStamps  UserDiaryCommentStamp[]
-  User                    User                    @relation(fields: [userId],references: [id])
-  Diary                   Diary                   @relation(fields: [diaryId],references: [id])
+  User                    User                    @relation(fields: [userId],references: [id],onDelete: Cascade)
+  Diary                   Diary                   @relation(fields: [diaryId],references: [id],onDelete: Cascade)
 }
