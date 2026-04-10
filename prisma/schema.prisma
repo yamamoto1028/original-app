@@ -9,5 +9,183 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
+}
+
+model Team {
+  id               Int              @id @default(autoincrement())
+  name             String   
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  Users            User[]
+  ReminderSettings ReminderSetting[]
+  Roles            Role[]
+  Events           Event[]
+  DiaryCategories  DiaryCategory[]
+
+}
+
+enum Sex {
+  MALE
+  FEMALE
+}
+
+model User {
+  id                     Int                       @id @default(autoincrement())
+  teamId                 Int
+  roleId                 Int
+  name                   String
+  email                  String
+  profilePhotoUrl        String?
+  memo                   String?
+  faculty                String?
+  department             String?
+  sex                    Sex
+  entranceYear           String?
+  almaMater              String?
+  createdAt              DateTime                  @default(now()) @map("created_at")
+  updatedAt              DateTime                  @updatedAt @map("updated_at")
+  Diaries                Diary[]
+  UserEvents             UserEvent[]
+  UserDiaryStamps        UserDiaryStamp[]
+  UserDiaryCommentStamps UserDiaryCommentStamp[] 
+  DiaryComment           DiaryComment[]
+  Team                   Team                      @relation(fields: [teamId],references: [id],onDelete: Cascade)
+  Role                   Role                      @relation(fields: [roleId],references: [id])
+}
+
+enum TriggerType {
+  MONTHLY
+  WEEKLY
+  DAILY
+}
+
+model ReminderSetting {
+  id                    Int                   @id @default(autoincrement())
+  teamId                Int
+  triggerType           TriggerType           @default(DAILY)
+  daysOfWeek            Int[]
+  triggerTime           DateTime              @db.Time(0)
+  onlyUnposted          Boolean
+  isActive              Boolean
+  createdAt             DateTime              @default(now()) @map("created_at")
+  updatedAt             DateTime              @updatedAt @map("updated_at")
+  ReminderSettingRoles  ReminderSettingRole[]
+  Team                  Team                  @relation(fields: [teamId],references: [id],onDelete: Cascade)
+
+}
+
+model ReminderSettingRole {
+  id                Int             @id @default(autoincrement())
+  reminderSettingId Int
+  roleId            Int
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  Role              Role            @relation(fields: [roleId],references: [id])
+  ReminderSetting   ReminderSetting @relation(fields: [reminderSettingId],references: [id])
+}
+
+model Role {
+  id                   Int                   @id @default(autoincrement())
+  userId               Int                   @unique
+  teamId               Int
+  name                 String
+  canSeeTeamPage       Boolean
+  canSeeCoachPage      Boolean
+  canSeeDiary          Boolean
+  createdAt            DateTime              @default(now()) @map("created_at")
+  updatedAt            DateTime              @updatedAt @map("updated_at")
+  ReminderSettingRoles ReminderSettingRole[]
+  Team                 Team                  @relation(fields: [teamId],references: [id],onDelete: Cascade)
+  User                 User[]
+}
+
+model UserEvent {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  eventId   Int
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  User      User      @relation(fields: [userId],references: [id])
+  Event     Event     @relation(fields: [eventId],references: [id])
+}
+
+model Event {
+  id         Int           @id @default(autoincrement())
+  teamId     Int
+  name       String
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+  UserEvents UserEvent[]
+  Team       Team         @relation(fields: [teamId],references: [id],onDelete: Cascade)
+}
+
+model UserDiaryStamp{
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  diaryId   Int
+  stampType String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  User      User      @relation(fields: [userId], references: [id],onDelete: Cascade)
+  Diary     Diary     @relation(fields: [diaryId],references: [id],onDelete: Cascade)
+  @@unique([userId,diaryId,stampType])
+}
+
+enum ScopePublish {
+  ALL
+  LIMITED
+  PRIVATE
+}
+
+model Diary {
+  id              Int               @id @default(autoincrement())
+  userId          Int
+  diaryCategoryId Int
+  goal            String?
+  menu            String?
+  log             String?
+  score           Int
+  scopePublish    ScopePublish      @default(LIMITED)
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  UserDiaryStamps UserDiaryStamp[]
+  DiaryComments   DiaryComment[] 
+  User            User              @relation(fields: [userId], references: [id],onDelete: Cascade)
+  DiaryCategory   DiaryCategory     @relation(fields: [diaryCategoryId],references: [id],onDelete: Cascade)
+
+}
+
+model DiaryCategory{
+  id        Int      @id @default(autoincrement())
+  teamId    Int
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  Diaries   Diary[]
+  Team      Team     @relation(fields: [teamId],references: [id],onDelete: Cascade)
+}
+
+model UserDiaryCommentStamp {
+  id              Int          @id @default(autoincrement())
+  userId          Int
+  diaryCommentId  Int
+  stampType       String
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+  User            User         @relation(fields: [userId],references: [id],onDelete: Cascade)
+  DiaryComment    DiaryComment @relation(fields: [diaryCommentId],references: [id],onDelete: Cascade)
+  @@unique([userId,diaryCommentId,stampType])
+}
+
+model DiaryComment {
+  id                      Int                     @id @default(autoincrement())
+  diaryId                 Int
+  userId                  Int
+  commentText             String
+  createdAt               DateTime                @default(now()) @map("created_at")
+  updatedAt               DateTime                @updatedAt @map("updated_at")
+  UserDiaryCommentStamps  UserDiaryCommentStamp[]
+  User                    User                    @relation(fields: [userId],references: [id],onDelete: Cascade)
+  Diary                   Diary                   @relation(fields: [diaryId],references: [id],onDelete: Cascade)
 }
